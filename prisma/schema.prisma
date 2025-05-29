@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  phone     String?
+  role      Role
+  shipments Shipment[]
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  ADMIN
+  SUPERADMIN
+  CUSTOMER
+  PICKUP_AGENT
+  DELIVERY_AGENT
+}
+
+model Shipment {
+  id              String   @id @default(uuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  pickupAddress   String
+  deliveryAddress String
+  postalCode      String
+  country         String?
+  weight          Float
+  dimensions      Json?
+  price           Float
+  status          ShipmentStatus
+  trackingId      String   @unique
+  assignedAgentId String?
+  createdAt       DateTime @default(now())
+
+  shipmentStatusUpdates ShipmentStatusUpdate[]
+}
+
+model ShipmentStatusUpdate {
+  id         String   @id @default(uuid())
+  shipmentId String
+  status     ShipmentStatus
+  timestamp  DateTime @default(now())
+  note       String?
+  location   String?
+  shipment   Shipment @relation(fields: [shipmentId], references: [id])
+}
+
+enum ShipmentStatus {
+  PENDING_PICKUP
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED_DELIVERY
+  CANCELLED
+}
+
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String
+  message   String
+  status    String   @default("OPEN")
+  createdAt DateTime @default(now())
+}
